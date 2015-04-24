@@ -60,7 +60,7 @@ public class TimerWorkerTest {
     }
 
     @Test
-    public void testTimer() {
+    public void testTimer() throws InterruptedException {
         //wait for start of a second
         long startDelay = 1001 - (System.currentTimeMillis() % 1000);
         try {
@@ -85,6 +85,7 @@ public class TimerWorkerTest {
 
         timerWorker.run();
 
+        Thread.sleep(200);
         verify(timerWorker, times(1000)).timerTick(eq(curTime), eq(curTime));
     }
 

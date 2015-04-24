@@ -54,7 +54,7 @@ public class TimerWorker implements Runnable {
         long curTime = localDateTime.getSecond() + localDateTime.getMinute() * 60 + localDateTime.getHour() * 3600;
 
         userRegistry.getUsers().values().parallelStream()
-            .filter(user -> user.getProfile().getDashBoards() == null)
+            .filter(user -> user.getProfile().getDashBoards() != null)
             .forEach(user -> user.getProfile().getActiveDashboardTimerWidgets().stream()
                 .forEach(timer -> sendMessagesAsync(allTimers, curTime, user, timer))
             );
