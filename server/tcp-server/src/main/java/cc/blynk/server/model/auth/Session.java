@@ -51,6 +51,20 @@ public class Session {
         channelSet.add(channel);
     }
 
+    public void pendMessageToHardware(MessageBase message) {
+        for (Channel channel : hardwareChannels) {
+            log.trace("Pending {} to {}", message, channel);
+            channel.write(message);
+        }
+    }
+
+    public void flushPendingMessagesToHardware() {
+        for (Channel channel : hardwareChannels) {
+            log.trace("Flush on {}", channel);
+            channel.flush();
+        }
+    }
+
     public void sendMessageToHardware(MessageBase message) {
         for (Channel channel : hardwareChannels) {
             log.trace("Sending {} to {}", message, channel);
