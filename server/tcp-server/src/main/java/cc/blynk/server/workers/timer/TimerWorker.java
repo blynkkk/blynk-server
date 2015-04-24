@@ -11,6 +11,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.LongAdder;
+
+import static java.lang.Runtime.getRuntime;
+import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 /**
  * The Blynk Project.
@@ -24,13 +30,14 @@ import java.time.ZoneId;
 public class TimerWorker implements Runnable {
 
     private static final Logger log = LogManager.getLogger(TimerWorker.class);
+    public static final ExecutorService MESSAGE_EXECUTOR = newFixedThreadPool(getRuntime().availableProcessors());
 
     private final UserRegistry userRegistry;
     private final SessionsHolder sessionsHolder;
     private final ZoneId UTC = ZoneId.of("UTC");
 
-    private int tickedTimers;
-    private int onlineTimers;
+    private final LongAdder tickedTimers = new LongAdder();
+    private final LongAdder onlineTimers = new LongAdder();
 
     public TimerWorker(UserRegistry userRegistry, SessionsHolder sessionsHolder) {
         this.userRegistry = userRegistry;
@@ -40,36 +47,38 @@ public class TimerWorker implements Runnable {
     @Override
     public void run() {
         log.trace("Starting timer...");
-        int allTimers = 0;
-        tickedTimers = 0;
-        onlineTimers = 0;
+        final LongAdder allTimers = new LongAdder();
 
         LocalTime localDateTime = LocalTime.now(UTC);
 
         long curTime = localDateTime.getSecond() + localDateTime.getMinute() * 60 + localDateTime.getHour() * 3600;
 
-        for (User user : userRegistry.getUsers().values()) {
-            if (user.getProfile().getDashBoards() != null) {
-                for (Timer timer : user.getProfile().getActiveDashboardTimerWidgets()) {
-                    allTimers++;
-                    sendMessageIfTicked(user, curTime, timer.startTime, timer.startValue);
-                    sendMessageIfTicked(user, curTime, timer.stopTime, timer.stopValue);
-                }
-            }
-        }
+        userRegistry.getUsers().values().parallelStream()
+            .filter(user -> user.getProfile().getDashBoards() != null)
+            .forEach(user -> user.getProfile().getActiveDashboardTimerWidgets().stream()
+                .forEach(timer -> sendMessagesAsync(allTimers, curTime, user, timer))
+            );
 
         //logging only events when timers ticked.
-        if (onlineTimers > 0) {
-            log.info("Timer finished. Processed {}/{}/{} timers.", onlineTimers, tickedTimers, allTimers);
+        if (onlineTimers.sumThenReset() > 0) {
+            log.info("Timer finished. Processed {}/{}/{} timers.", onlineTimers, tickedTimers.sumThenReset(), allTimers.sum());
         }
+    }
+
+    private void sendMessagesAsync(LongAdder allTimers, long curTime, User user, Timer timer) {
+        allTimers.increment();
+        runAsync(() -> {
+            sendMessageIfTicked(user, curTime, timer.startTime, timer.startValue);
+            sendMessageIfTicked(user, curTime, timer.stopTime, timer.stopValue);
+        }, MESSAGE_EXECUTOR);
     }
 
     private void sendMessageIfTicked(User user, long curTime, Long time, String value) {
         if (timerTick(curTime, time)) {
-            tickedTimers++;
+            tickedTimers.increment();
             Session session = sessionsHolder.getUserSession().get(user);
             if (session != null) {
-                onlineTimers++;
+                onlineTimers.increment();
                 if (session.hardwareChannels.size() > 0) {
                     session.sendMessageToHardware(new HardwareMessage(7777, value));
                 }
