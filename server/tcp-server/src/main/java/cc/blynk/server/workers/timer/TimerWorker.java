@@ -9,11 +9,9 @@ import cc.blynk.server.model.widgets.others.Timer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.jws.soap.SOAPBinding;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Runtime.getRuntime;
