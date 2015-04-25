@@ -58,6 +58,8 @@ public class TimerWorker implements Runnable {
             }
         }
 
+        sessionsHolder.getUserSession().values().forEach(Session::flushPendingMessagesToHardware);
+
         //logging only events when timers ticked.
         if (onlineTimers > 0) {
             log.info("Timer finished. Processed {}/{}/{} timers.", onlineTimers, tickedTimers, allTimers);
@@ -71,7 +73,7 @@ public class TimerWorker implements Runnable {
             if (session != null) {
                 onlineTimers++;
                 if (session.hardwareChannels.size() > 0) {
-                    session.sendMessageToHardware(new HardwareMessage(7777, value));
+                    session.pendMessageToHardware(new HardwareMessage(7777, value));
                 }
             }
         }
