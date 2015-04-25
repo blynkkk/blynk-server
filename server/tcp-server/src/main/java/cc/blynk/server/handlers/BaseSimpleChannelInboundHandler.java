@@ -91,7 +91,7 @@ public abstract class BaseSimpleChannelInboundHandler<I extends MessageBase> ext
      *                      belongs to
      * @param msg           the message to handle
      */
-    protected abstract void messageReceived(ChannelHandlerContext ctx, User user, I msg);
+    protected abstract void messageReceived(ChannelHandlerContext ctx, User user, I msg) throws InterruptedException;
 
     /**
      *  When property file changed during server work, to avoid restart,

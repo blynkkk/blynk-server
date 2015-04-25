@@ -23,6 +23,12 @@ public class User implements Serializable {
 
     private String id;
 
+    private volatile long lastEmailSentTs = System.currentTimeMillis();
+
+	private long lastTweetSentTs = System.currentTimeMillis();
+
+	private long lastPushSentTs = System.currentTimeMillis();
+
     //used mostly to understand if user profile was changed, all other fields update ignored as it is not so important
     private long lastModifiedTs;
 
@@ -157,5 +163,29 @@ public class User implements Serializable {
     @Override
     public String toString() {
         return JsonParser.toJson(this);
+    }
+
+    public long getLastEmailSentTs() {
+        return lastEmailSentTs;
+    }
+
+    public void setLastEmailSentTs(long lastEmailSentTs) {
+        this.lastEmailSentTs = lastEmailSentTs;
+    }
+
+    public long getLastTweetSentTs() {
+        return lastTweetSentTs;
+    }
+
+    public void setLastTweetSentTs(long lastTweetSentTs) {
+        this.lastTweetSentTs = lastTweetSentTs;
+    }
+
+    public long getLastPushSentTs() {
+        return lastPushSentTs;
+    }
+
+    public void setLastPushSentTs(long lastPushSentTs) {
+        this.lastPushSentTs = lastPushSentTs;
     }
 }
