@@ -1,5 +1,6 @@
 package cc.blynk.server.model.auth;
 
+import cc.blynk.common.utils.ServerProperties;
 import cc.blynk.server.model.Profile;
 import cc.blynk.server.stats.metrics.InstanceLoadMeter;
 import cc.blynk.server.utils.JsonParser;
@@ -23,11 +24,21 @@ public class User implements Serializable {
 
     private String id;
 
-    private volatile long lastEmailSentTs = System.currentTimeMillis();
+	private final static ServerProperties serverProperties = new ServerProperties();
 
-	private long lastTweetSentTs = System.currentTimeMillis();
+    private final static long defaultEmailQuota = serverProperties.getLongProperty("email.notifications.user.quota.limit") * 1000;
 
-	private long lastPushSentTs = System.currentTimeMillis();
+	private final static long defaultTwitterQuota = serverProperties.getLongProperty("twitter.notifications.user.quota.limit") * 1000;
+
+	private final static long defaultPushQuota = serverProperties.getLongProperty("push.notifications.user.quota.limit") * 1000;
+
+    // we set it with time in the past to make first email/tweet/push possible.
+
+	private volatile long lastEmailSentTs = System.currentTimeMillis() - defaultEmailQuota;
+
+	private volatile long lastTweetSentTs = System.currentTimeMillis() - defaultTwitterQuota ;
+
+	private volatile long lastPushSentTs = System.currentTimeMillis() - defaultPushQuota;
 
     //used mostly to understand if user profile was changed, all other fields update ignored as it is not so important
     private long lastModifiedTs;

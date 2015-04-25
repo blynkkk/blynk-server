@@ -90,7 +90,7 @@ public class MailHandler extends BaseSimpleChannelInboundHandler<MailMessage> {
 		if(timePassedSinceLastMessage < defaultMailQuotaLimit) {
 			throw new QuotaLimitException(String.format("Only 1 mail per %s seconds is allowed", defaultMailQuotaLimit), message.id);
 		}
-		user.setLastEmailSentTs(System.currentTimeMillis());
+		user.setLastEmailSentTs(currentTs);
 		ctx.writeAndFlush(produce(message.id, OK));
 
     }

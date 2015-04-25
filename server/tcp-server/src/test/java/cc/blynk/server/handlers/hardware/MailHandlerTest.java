@@ -5,25 +5,24 @@ import cc.blynk.common.model.messages.MessageFactory;
 import cc.blynk.common.model.messages.protocol.hardware.MailMessage;
 import cc.blynk.common.utils.ServerProperties;
 import cc.blynk.server.TestBase;
+import cc.blynk.server.dao.SessionsHolder;
+import cc.blynk.server.dao.UserRegistry;
 import cc.blynk.server.exceptions.IllegalCommandException;
 import cc.blynk.server.exceptions.NotAllowedException;
+import cc.blynk.server.exceptions.QuotaLimitException;
 import cc.blynk.server.model.Profile;
 import cc.blynk.server.model.auth.User;
 import cc.blynk.server.model.widgets.others.Mail;
 import cc.blynk.server.workers.notifications.NotificationsProcessor;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -44,22 +43,23 @@ public class MailHandlerTest extends TestBase {
 	@Mock
 	private ChannelHandlerContext ctx;
 
-    @Mock
-    private User user;
+	@Mock
+	private UserRegistry userRegistry;
 
 	@Mock
-	ServerProperties serverProperties;
+	private SessionsHolder sessionsHolder;
+
+	@Mock
+	private static ServerProperties props;
+
+    @Mock
+    private User user;
 
     @Mock
     private Profile profile;
 
     @Mock
     private Channel channel;
-
-	@Before
-	public void before() {
-		props = new ServerProperties();
-	}
 
     @Test(expected = NotAllowedException.class)
 	public void testNoEmailWidget() throws InterruptedException {
@@ -152,24 +152,35 @@ public class MailHandlerTest extends TestBase {
         verify(ctx).writeAndFlush(any());
     }
 
-	@Test
-	public void testSendQuotaLimitationIsWorking() throws InterruptedException {
-		final int defaultMessageQuotaLimit = props.getIntProperty("email.notifications.user.quota.limit");
+	@Test(expected = QuotaLimitException.class)
+	public void testSendQuotaLimitationException() throws InterruptedException {
 		MailMessage mailMessage1 = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
-		MailMessage mailMessage2 = (MailMessage) MessageFactory.produce(2, Command.EMAIL, "pupkin2@example.com subj2 body2".replaceAll(" ", "\0"));
-
 		User user = spy(new User());
+		MailHandler mailHandler = spy(new MailHandler(new ServerProperties(), userRegistry, sessionsHolder, notificationsProcessor));
 		when(user.getProfile()).thenReturn(profile);
 		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
 		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
-
 		when(ctx.channel()).thenReturn(channel);
-
 		mailHandler.messageReceived(ctx, user, mailMessage1);
-		final long message1Ts = System.currentTimeMillis();
-		mailHandler.messageReceived(ctx, user, mailMessage2);
-		final long message2Ts = System.currentTimeMillis();
-		Assert.assertTrue((message2Ts - message1Ts) / 1000 >= defaultMessageQuotaLimit);
+		TimeUnit.SECONDS.sleep(1);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+	}
+
+	@Test()
+	public void testSendQuotaLimitationIsWorking() throws InterruptedException {
+		MailMessage mailMessage1 = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
+		final ServerProperties props = new ServerProperties();
+		props.setProperty("email.notifications.user.quota.limit", "3");
+		final long defaultQuotaTime = props.getLongProperty("email.notifications.user.quota.limit") * 1000;
+		User user = spy(new User());
+		MailHandler mailHandler = spy(new MailHandler(props, userRegistry, sessionsHolder, notificationsProcessor));
+		when(user.getProfile()).thenReturn(profile);
+		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
+		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
+		when(ctx.channel()).thenReturn(channel);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+		TimeUnit.MILLISECONDS.sleep(defaultQuotaTime);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
 	}
 
 }
