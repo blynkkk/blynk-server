@@ -16,9 +16,11 @@ import java.util.Map;
  */
 public class User implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private String name;
+	private final long currentTimeStamp = System.currentTimeMillis();
+
+	private String name;
 
     private String pass;
 
@@ -30,15 +32,11 @@ public class User implements Serializable {
 
 	private final static long defaultTwitterQuota = serverProperties.getLongProperty("twitter.notifications.user.quota.limit") * 1000;
 
-	private final static long defaultPushQuota = serverProperties.getLongProperty("push.notifications.user.quota.limit") * 1000;
-
     // we set it with time in the past to make first email/tweet/push possible.
 
-	private volatile long lastEmailSentTs = System.currentTimeMillis() - defaultEmailQuota;
+	private volatile long lastEmailSentTs = currentTimeStamp - defaultEmailQuota;
 
-	private volatile long lastTweetSentTs = System.currentTimeMillis() - defaultTwitterQuota ;
-
-	private volatile long lastPushSentTs = System.currentTimeMillis() - defaultPushQuota;
+	private volatile long lastTweetSentTs = currentTimeStamp - defaultTwitterQuota ;
 
     //used mostly to understand if user profile was changed, all other fields update ignored as it is not so important
     private long lastModifiedTs;
@@ -161,10 +159,9 @@ public class User implements Serializable {
 
         User user = (User) o;
 
-        if (name != null ? !name.equals(user.name) : user.name != null) return false;
+		return !(name != null ? !name.equals(user.name) : user.name != null);
 
-        return true;
-    }
+	}
 
     @Override
     public int hashCode() {
@@ -192,11 +189,4 @@ public class User implements Serializable {
         this.lastTweetSentTs = lastTweetSentTs;
     }
 
-    public long getLastPushSentTs() {
-        return lastPushSentTs;
-    }
-
-    public void setLastPushSentTs(long lastPushSentTs) {
-        this.lastPushSentTs = lastPushSentTs;
-    }
 }

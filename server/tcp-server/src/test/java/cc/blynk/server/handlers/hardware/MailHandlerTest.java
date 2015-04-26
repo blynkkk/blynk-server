@@ -93,7 +93,7 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-	public void sendEmptyBodyMailYoUseDefaults() throws InterruptedException {
+	public void sendEmptyBodyMailYoUseDefaults() {
 		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "");
 
         when(user.getProfile()).thenReturn(profile);
@@ -108,7 +108,7 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-	public void sendEmptyBodyMailYoUseDefaultsExceptBody() throws InterruptedException {
+	public void sendEmptyBodyMailYoUseDefaultsExceptBody() {
 		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
@@ -123,7 +123,7 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-	public void sendEmptyBodyMailYoUseDefaultsExceptBodyAndSubj() throws InterruptedException {
+	public void sendEmptyBodyMailYoUseDefaultsExceptBodyAndSubj() {
 		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "subj body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
@@ -138,7 +138,7 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-	public void sendEmptyBodyMailYoNoDefaults() throws InterruptedException {
+	public void sendEmptyBodyMailYoNoDefaults() {
 		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
@@ -160,7 +160,6 @@ public class MailHandlerTest extends TestBase {
 		when(user.getProfile()).thenReturn(profile);
 		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
 		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
-		when(ctx.channel()).thenReturn(channel);
 		mailHandler.messageReceived(ctx, user, mailMessage1);
 		TimeUnit.SECONDS.sleep(1);
 		mailHandler.messageReceived(ctx, user, mailMessage1);
@@ -177,7 +176,6 @@ public class MailHandlerTest extends TestBase {
 		when(user.getProfile()).thenReturn(profile);
 		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
 		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
-		when(ctx.channel()).thenReturn(channel);
 		mailHandler.messageReceived(ctx, user, mailMessage1);
 		TimeUnit.MILLISECONDS.sleep(defaultQuotaTime);
 		mailHandler.messageReceived(ctx, user, mailMessage1);
