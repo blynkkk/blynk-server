@@ -1,5 +1,6 @@
 package cc.blynk.server.model.auth;
 
+import cc.blynk.common.utils.ServerProperties;
 import cc.blynk.server.model.Profile;
 import cc.blynk.server.stats.metrics.InstanceLoadMeter;
 import cc.blynk.server.utils.JsonParser;
@@ -15,13 +16,27 @@ import java.util.Map;
  */
 public class User implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private String name;
+	private final long currentTimeStamp = System.currentTimeMillis();
+
+	private String name;
 
     private String pass;
 
     private String id;
+
+	private final static ServerProperties serverProperties = new ServerProperties();
+
+    private final static long defaultEmailQuota = serverProperties.getLongProperty("email.notifications.user.quota.limit") * 1000;
+
+	private final static long defaultTwitterQuota = serverProperties.getLongProperty("twitter.notifications.user.quota.limit") * 1000;
+
+    // we set it with time in the past to make first email/tweet/push possible.
+
+	private volatile long lastEmailSentTs = currentTimeStamp - defaultEmailQuota;
+
+	private volatile long lastTweetSentTs = currentTimeStamp - defaultTwitterQuota ;
 
     //used mostly to understand if user profile was changed, all other fields update ignored as it is not so important
     private long lastModifiedTs;
@@ -144,10 +159,9 @@ public class User implements Serializable {
 
         User user = (User) o;
 
-        if (name != null ? !name.equals(user.name) : user.name != null) return false;
+		return !(name != null ? !name.equals(user.name) : user.name != null);
 
-        return true;
-    }
+	}
 
     @Override
     public int hashCode() {
@@ -158,4 +172,21 @@ public class User implements Serializable {
     public String toString() {
         return JsonParser.toJson(this);
     }
+
+    public long getLastEmailSentTs() {
+        return lastEmailSentTs;
+    }
+
+    public void setLastEmailSentTs(long lastEmailSentTs) {
+        this.lastEmailSentTs = lastEmailSentTs;
+    }
+
+    public long getLastTweetSentTs() {
+        return lastTweetSentTs;
+    }
+
+    public void setLastTweetSentTs(long lastTweetSentTs) {
+        this.lastTweetSentTs = lastTweetSentTs;
+    }
+
 }

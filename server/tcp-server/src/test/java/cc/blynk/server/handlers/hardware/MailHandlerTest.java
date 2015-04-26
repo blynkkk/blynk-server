@@ -3,9 +3,13 @@ package cc.blynk.server.handlers.hardware;
 import cc.blynk.common.enums.Command;
 import cc.blynk.common.model.messages.MessageFactory;
 import cc.blynk.common.model.messages.protocol.hardware.MailMessage;
+import cc.blynk.common.utils.ServerProperties;
 import cc.blynk.server.TestBase;
+import cc.blynk.server.dao.SessionsHolder;
+import cc.blynk.server.dao.UserRegistry;
 import cc.blynk.server.exceptions.IllegalCommandException;
 import cc.blynk.server.exceptions.NotAllowedException;
+import cc.blynk.server.exceptions.QuotaLimitException;
 import cc.blynk.server.model.Profile;
 import cc.blynk.server.model.auth.User;
 import cc.blynk.server.model.widgets.others.Mail;
@@ -17,6 +21,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -34,8 +40,17 @@ public class MailHandlerTest extends TestBase {
     @InjectMocks
     private MailHandler mailHandler;
 
-    @Mock
-    private ChannelHandlerContext ctx;
+	@Mock
+	private ChannelHandlerContext ctx;
+
+	@Mock
+	private UserRegistry userRegistry;
+
+	@Mock
+	private SessionsHolder sessionsHolder;
+
+	@Mock
+	private static ServerProperties props;
 
     @Mock
     private User user;
@@ -47,8 +62,8 @@ public class MailHandlerTest extends TestBase {
     private Channel channel;
 
     @Test(expected = NotAllowedException.class)
-    public void testNoEmailWidget() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body");
+	public void testNoEmailWidget() throws InterruptedException {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body");
 
         when(user.getProfile()).thenReturn(profile);
         when(profile.getActiveDashboardEmailWidget()).thenReturn(null);
@@ -57,8 +72,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test(expected = IllegalCommandException.class)
-    public void testNoToBody() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "".replaceAll(" ", "\0"));
+	public void testNoToBody() throws InterruptedException {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
         Mail mail = new Mail();
@@ -68,8 +83,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test(expected = IllegalCommandException.class)
-    public void testNoBody() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body".replaceAll(" ", "\0"));
+	public void testNoBody() throws InterruptedException {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
         when(profile.getActiveDashboardEmailWidget()).thenReturn(new Mail());
@@ -78,8 +93,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-    public void sendEmptyBodyMailYoUseDefaults() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "");
+	public void sendEmptyBodyMailYoUseDefaults() {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "");
 
         when(user.getProfile()).thenReturn(profile);
         Mail mail = new Mail("me@example.com", "Yo", "MyBody");
@@ -93,8 +108,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-    public void sendEmptyBodyMailYoUseDefaultsExceptBody() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body".replaceAll(" ", "\0"));
+	public void sendEmptyBodyMailYoUseDefaultsExceptBody() {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
         Mail mail = new Mail("me@example.com", "Yo", "MyBody");
@@ -108,8 +123,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-    public void sendEmptyBodyMailYoUseDefaultsExceptBodyAndSubj() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "subj body".replaceAll(" ", "\0"));
+	public void sendEmptyBodyMailYoUseDefaultsExceptBodyAndSubj() {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "subj body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
         Mail mail = new Mail("me@example.com", "Yo", "MyBody");
@@ -123,8 +138,8 @@ public class MailHandlerTest extends TestBase {
     }
 
     @Test
-    public void sendEmptyBodyMailYoNoDefaults() {
-        MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
+	public void sendEmptyBodyMailYoNoDefaults() {
+		MailMessage mailMessage = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
 
         when(user.getProfile()).thenReturn(profile);
         Mail mail = new Mail("me@example.com", "Yo", "MyBody");
@@ -136,5 +151,34 @@ public class MailHandlerTest extends TestBase {
         verify(notificationsProcessor).mail(eq("pupkin@example.com"), eq("subj"), eq("body"), eq(1));
         verify(ctx).writeAndFlush(any());
     }
+
+	@Test(expected = QuotaLimitException.class)
+	public void testSendQuotaLimitationException() throws InterruptedException {
+		MailMessage mailMessage1 = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
+		User user = spy(new User());
+		MailHandler mailHandler = spy(new MailHandler(new ServerProperties(), userRegistry, sessionsHolder, notificationsProcessor));
+		when(user.getProfile()).thenReturn(profile);
+		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
+		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+		TimeUnit.SECONDS.sleep(1);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+	}
+
+	@Test()
+	public void testSendQuotaLimitationIsWorking() throws InterruptedException {
+		MailMessage mailMessage1 = (MailMessage) MessageFactory.produce(1, Command.EMAIL, "pupkin@example.com subj body".replaceAll(" ", "\0"));
+		final ServerProperties props = new ServerProperties();
+		props.setProperty("email.notifications.user.quota.limit", "3");
+		final long defaultQuotaTime = props.getLongProperty("email.notifications.user.quota.limit") * 1000;
+		User user = spy(new User());
+		MailHandler mailHandler = spy(new MailHandler(props, userRegistry, sessionsHolder, notificationsProcessor));
+		when(user.getProfile()).thenReturn(profile);
+		Mail mail = new Mail("me@example.com", "Yo", "MyBody");
+		when(profile.getActiveDashboardEmailWidget()).thenReturn(mail);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+		TimeUnit.MILLISECONDS.sleep(defaultQuotaTime);
+		mailHandler.messageReceived(ctx, user, mailMessage1);
+	}
 
 }

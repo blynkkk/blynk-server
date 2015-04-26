@@ -26,6 +26,7 @@ public final class Response {
     public static final int TWEET_BODY_INVALID_EXCEPTION = 13;
     public static final int TWEET_NOT_AUTHORIZED_EXCEPTION = 14;
     public static final int SERVER_BUSY_EXCEPTION = 15;
+    public static final int QUOTA_LIMIT_EXCEPTION = 16;
 
 
     //all this code just to make logging more user-friendly
