@@ -6,6 +6,7 @@ import cc.blynk.common.utils.ServerProperties;
 import cc.blynk.integration.model.ClientPair;
 import cc.blynk.integration.model.TestAppClient;
 import cc.blynk.integration.model.TestHardClient;
+import cc.blynk.integration.model.TestMutualAppClient;
 import cc.blynk.server.dao.FileManager;
 import cc.blynk.server.dao.JedisWrapper;
 import cc.blynk.server.dao.SessionsHolder;
@@ -39,6 +40,7 @@ public abstract class IntegrationBase {
     public static int appPort;
     public static int hardPort;
     public static String host;
+    private static int hardSslPort;
 
 
     @Mock
@@ -65,6 +67,7 @@ public abstract class IntegrationBase {
         properties = new ServerProperties();
         appPort = properties.getIntProperty("app.ssl.port");
         hardPort = properties.getIntProperty("hardware.default.port");
+        hardSslPort = properties.getIntProperty("hardware.ssl.port");
         host = "localhost";
     }
 
@@ -92,6 +95,10 @@ public abstract class IntegrationBase {
 
     public ClientPair initAppAndHardPair() throws Exception {
         return initAppAndHardPair("localhost", appPort, hardPort, "dima@mail.ua 1", null);
+    }
+
+    public ClientPair initMutualAppAndHardPair() throws Exception {
+        return initMutualAppAndHardPair("localhost", appPort, hardSslPort, "andrew@mail.ua 1", null);
     }
 
     public ClientPair initAppAndHardPair(String jsonProfile) throws Exception {
@@ -129,6 +136,37 @@ public abstract class IntegrationBase {
         return new ClientPair(appClient, hardClient, token);
     }
 
+    public ClientPair initMutualAppAndHardPair(String host, int appPort, int hardPort, String user, String jsonProfile) throws Exception {
+        TestMutualAppClient appClient = new TestMutualAppClient(host, appPort, false);
+        TestHardClient hardClient = new TestHardClient(host, hardPort);
+
+        appClient.start(null);
+        hardClient.start(null);
+
+        String userProfileString = readTestUserProfile(jsonProfile);
+
+        appClient.send("register " + user)
+                .send("login " + user)
+                .send("saveProfile " + userProfileString)
+                .send("activate 1")
+                .send("getToken 1");
+
+        ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(appClient.responseMock, timeout(2000).times(5)).channelRead(any(), objectArgumentCaptor.capture());
+
+        List<Object> arguments = objectArgumentCaptor.getAllValues();
+        Message getTokenMessage = (Message) arguments.get(4);
+        String token = getTokenMessage.body;
+
+        hardClient.send("login " + token);
+        verify(hardClient.responseMock, timeout(2000)).channelRead(any(), eq(produce(1, OK)));
+
+        appClient.reset();
+        hardClient.reset();
+
+        return new ClientPair(appClient, hardClient, token);
+    }
+
     public void initServerStructures() {
         fileManager = new FileManager(properties.getProperty("data.folder"));
         sessionsHolder = new SessionsHolder();
@@ -136,6 +174,4 @@ public abstract class IntegrationBase {
         stats = new GlobalStats();
         jedisWrapper = new JedisWrapper(properties);
     }
-
-
 }
