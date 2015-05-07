@@ -32,7 +32,6 @@ public class Profile {
      * is remembered and when hardware goes online - server sends Pin Modes command to hardware
      * without requiring user to activate/deactivate dashboard again.
      */
-    private transient boolean isJustActivated;
     private transient HardwareMessage pinModeMessage;
 
 
@@ -131,15 +130,6 @@ public class Profile {
 
     public void setActiveDashId(Integer activeDashId) {
         this.activeDashId = activeDashId;
-        this.isJustActivated = true;
-    }
-
-    public boolean isJustActivated() {
-        return isJustActivated;
-    }
-
-    public void setJustActivated(boolean isJustActivated) {
-        this.isJustActivated = isJustActivated;
     }
 
     public HardwareMessage getPinModeMessage() {

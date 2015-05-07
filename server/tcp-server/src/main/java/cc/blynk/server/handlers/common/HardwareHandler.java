@@ -32,7 +32,7 @@ public class HardwareHandler extends BaseSimpleChannelInboundHandler<HardwareMes
     }
 
     private static boolean pinModeMessage(String body) {
-        return body != null && body.length() > 0 && body.charAt(0) == 'p';
+        return body.length() > 0 && body.charAt(0) == 'p';
     }
 
     @Override
@@ -50,12 +50,12 @@ public class HardwareHandler extends BaseSimpleChannelInboundHandler<HardwareMes
                 throw new NoActiveDashboardException(message.id);
             }
 
+            if (pinModeMessage(message.body)) {
+                log.trace("No device and Pin Mode message catch. Remembering.");
+                user.getProfile().setPinModeMessage(message);
+            }
+
             if (session.hardwareChannels.size() == 0) {
-                if (pinModeMessage(message.body) && user.getProfile().isJustActivated()) {
-                    log.trace("No device and Pin Mode message catch. Remembering.");
-                    user.getProfile().setPinModeMessage(message);
-                    user.getProfile().setJustActivated(false);
-                }
                 throw new DeviceNotInNetworkException(message.id);
             }
 

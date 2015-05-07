@@ -15,4 +15,6 @@ public class Digit4Display extends Widget {
 
     public int frequency;
 
+    public int mappingMode;
+
 }

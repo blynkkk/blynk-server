@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <name>Blynk Server</name>
@@ -27,6 +27,19 @@
         <module>server</module>
         <module>integration-tests</module>
     </modules>
+
+    <repositories>
+        <repository>
+            <id>netty-snapshots</id>
+            <url>http://clinker.netty.io/nexus/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -79,7 +92,7 @@
     </profiles>
 
     <properties>
-        <netty.version>4.0.27.Final</netty.version>
+        <netty.version>4.0.28.Final-SNAPSHOT</netty.version>
         <log4j2.version>2.2</log4j2.version>
     </properties>
 

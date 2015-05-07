@@ -14,7 +14,7 @@ import cc.blynk.server.model.auth.User;
 import cc.blynk.server.workers.notifications.NotificationsProcessor;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.*;
+import io.netty.util.Attribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -86,7 +85,6 @@ public class HardwareHandlerTest extends TestBase {
         when(ctx.channel()).thenReturn(channel);
         when(channel.attr(ChannelState.IS_HARD_CHANNEL)).thenReturn(attr);
         Profile profile = spy(new Profile());
-        profile.setJustActivated(true);
         when(attr.get()).thenReturn(false);
         when(user.getProfile()).thenReturn(profile);
         when(profile.getActiveDashId()).thenReturn(1);
@@ -98,8 +96,6 @@ public class HardwareHandlerTest extends TestBase {
             hardwareHandler.messageReceived(ctx, user, message);
         }catch (DeviceNotInNetworkException e){
             Assert.assertEquals(message, profile.getPinModeMessage());
-            Assert.assertEquals(false, profile.isJustActivated());
-
         }
     }
 }

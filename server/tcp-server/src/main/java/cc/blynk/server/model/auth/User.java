@@ -1,11 +1,13 @@
 package cc.blynk.server.model.auth;
 
+import cc.blynk.server.model.DashBoard;
 import cc.blynk.server.model.Profile;
 import cc.blynk.server.stats.metrics.InstanceLoadMeter;
 import cc.blynk.server.utils.JsonParser;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -95,9 +97,34 @@ public class User implements Serializable {
     }
 
     public void putToken(Integer dashId, String token) {
+        cleanTokensForNonExistentDashes();
         this.dashTokens.put(dashId, token);
         this.lastModifiedTs = System.currentTimeMillis();
     }
+
+    private void cleanTokensForNonExistentDashes() {
+        Iterator<Integer> iterator = this.dashTokens.keySet().iterator();
+        while (iterator.hasNext()) {
+            if (!exists(iterator.next())) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private boolean exists(int dashId) {
+        if (profile.getDashBoards() == null) {
+            return false;
+        }
+
+        for (DashBoard dashBoard : profile.getDashBoards()) {
+            if (dashBoard.getId() == dashId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     public String getId() {
         return id;
