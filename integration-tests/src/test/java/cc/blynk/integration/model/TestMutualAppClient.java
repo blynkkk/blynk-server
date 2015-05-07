@@ -12,6 +12,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -51,14 +52,18 @@ public class TestMutualAppClient extends BaseClient {
         log.info("Creating app client. Host {}, sslPort : {}", host, port);
         ServerProperties props = new ServerProperties("mutual.server.properties");
         try {
-            this.sslCtx = SslContext.newClientContext(SslProvider.JDK,
-                    new File(props.getProperty("server.ssl.cert")),
-                    null,
-                    new File(props.getProperty("client.ssl.cert")),
-                    new File(props.getProperty("client.ssl.key")),
-                    props.getProperty("server.ssl.key.pass"),
-                    null, null, IdentityCipherSuiteFilter.INSTANCE, null, 0, 0);
+            this.sslCtx = SslContextBuilder.forClient()
+                    .sslProvider(SslProvider.JDK)
+                    .trustManager(new File(props.getProperty("server.ssl.cert")))
+                    .keyManager(new File(props.getProperty("client.ssl.cert")),
+                                new File(props.getProperty("client.ssl.key")),
+                                props.getProperty("server.ssl.key.pass"))
+                    .ciphers(null, IdentityCipherSuiteFilter.INSTANCE)
+                    .sessionCacheSize(0)
+                    .sessionTimeout(0)
+                    .build();
         } catch (SSLException e) {
+
             log.error("Error initializing SSL context. Reason : {}", e.getMessage());
             log.debug(e);
             throw new RuntimeException();
