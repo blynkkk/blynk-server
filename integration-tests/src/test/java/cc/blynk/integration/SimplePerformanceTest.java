@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class SimplePerformanceTest extends IntegrationBase {
 
-    final AtomicInteger counter = new AtomicInteger();
+    private final AtomicInteger counter = new AtomicInteger();
 
     @Test
     @Ignore
@@ -56,7 +56,7 @@ public class SimplePerformanceTest extends IntegrationBase {
         long start = System.currentTimeMillis();
         for (int i = 0; i < clientNumber; i++) {
             Future<ClientPair> future = executorService.submit(
-                    () -> initAppAndHardPair("localhost", 8443, 8442, "dima" + counter.incrementAndGet() + "@mail.ua 1", null)
+                    () -> initAppAndHardPair("localhost", 8443, 8442, "dima" + counter.incrementAndGet() + "@mail.ua 1", null, false)
             );
             futures.add(future);
         }
@@ -72,7 +72,7 @@ public class SimplePerformanceTest extends IntegrationBase {
 
         System.out.println(clientNumber + " client pairs created in " + (System.currentTimeMillis() - start));
 
-        start = System.currentTimeMillis();
+        System.currentTimeMillis();
         while (true) {
             for (ClientPair clientPair : clients) {
                 clientPair.appClient.send("hardware aw 10 10");

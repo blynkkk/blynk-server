@@ -3,6 +3,7 @@ package cc.blynk.integration.model;
 import cc.blynk.client.core.BaseClient;
 import cc.blynk.common.handlers.common.decoders.MessageDecoder;
 import cc.blynk.common.handlers.common.encoders.MessageEncoder;
+import cc.blynk.common.utils.ServerProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.spy;
 public class TestMutualAppClient extends BaseClient {
 
     public final SimpleClientHandler responseMock = Mockito.mock(SimpleClientHandler.class);
-    protected SslContext sslCtx;
+    private SslContext sslCtx;
     @Mock
     Random random;
     private int msgId = 0;
@@ -38,31 +39,29 @@ public class TestMutualAppClient extends BaseClient {
     private ChannelPipeline pipeline;
     private boolean disableAppSsl;
 
-    public TestMutualAppClient(String host, int port, boolean disableAppSsl) {
-        this(host, port, new Random(), disableAppSsl);
+    public TestMutualAppClient(String host, int port) {
+        this(host, port, new Random());
         random = spy(new Random());
         Mockito.when(random.nextInt(Short.MAX_VALUE)).thenReturn(1);
         this.disableAppSsl = false;
     }
 
-    public TestMutualAppClient(String host, int port, Random msgIdGenerator, boolean disableAppSsl) {
+    private TestMutualAppClient(String host, int port, Random msgIdGenerator) {
         super(host, port, msgIdGenerator);
         log.info("Creating app client. Host {}, sslPort : {}", host, port);
-
-        if (!disableAppSsl) {
-            try {
-                this.sslCtx = SslContext.newClientContext(SslProvider.JDK,
-                        new File(getTestCertificatePath("server.crt")),
-                        null,
-                        new File(getTestCertificatePath("app.crt")),
-                        new File(getTestCertificatePath("app.pem")),
-                        "blynkawesome",
-                        null, null, IdentityCipherSuiteFilter.INSTANCE, null, 0, 0);
-            } catch (SSLException e) {
-                log.error("Error initializing SSL context. Reason : {}", e.getMessage());
-                log.debug(e);
-                throw new RuntimeException();
-            }
+        ServerProperties props = new ServerProperties("mutual.server.properties");
+        try {
+            this.sslCtx = SslContext.newClientContext(SslProvider.JDK,
+                    new File(props.getProperty("server.ssl.cert")),
+                    null,
+                    new File(props.getProperty("client.ssl.cert")),
+                    new File(props.getProperty("client.ssl.key")),
+                    props.getProperty("server.ssl.key.pass"),
+                    null, null, IdentityCipherSuiteFilter.INSTANCE, null, 0, 0);
+        } catch (SSLException e) {
+            log.error("Error initializing SSL context. Reason : {}", e.getMessage());
+            log.debug(e);
+            throw new RuntimeException();
         }
     }
 
@@ -83,10 +82,6 @@ public class TestMutualAppClient extends BaseClient {
         } else {
             super.start(commandInputStream);
         }
-    }
-
-    private String getTestCertificatePath(String name) {
-        return getClass().getResource("/test-certs/mutual/" + name).toString().substring(5);
     }
 
     @Override
@@ -123,8 +118,4 @@ public class TestMutualAppClient extends BaseClient {
         msgId = 0;
     }
 
-    public void replace(SimpleClientHandler simpleClientHandler) {
-        pipeline.removeLast();
-        pipeline.addLast(simpleClientHandler);
-    }
 }
