@@ -14,16 +14,19 @@ public class RGB extends Widget {
 
     public Byte pin2;
 
+    public PinType pinType2;
+
     public boolean pwmMode2;
 
     public PinType pinType2;
 
     public Byte pin3;
 
+    public PinType pinType3;
+
     public boolean pwmMode3;
 
     public PinType pinType3;
 
     public boolean splitMode;
-
 }
