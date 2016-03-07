@@ -4,6 +4,7 @@ import cc.blynk.server.application.handlers.main.auth.AppStateHolder;
 import cc.blynk.server.core.dao.SessionDao;
 import cc.blynk.server.core.model.DashBoard;
 import cc.blynk.server.core.model.auth.Session;
+import cc.blynk.server.core.model.widgets.Widget;
 import cc.blynk.server.core.model.widgets.outputs.FrequencyWidget;
 import cc.blynk.server.core.protocol.model.messages.StringMessage;
 import cc.blynk.server.core.protocol.model.messages.appllication.sharing.SyncMessage;
@@ -67,9 +68,17 @@ public class HardwareAppLogic {
                 session.sendMessageToHardware(ctx, dashId, new HardwareMessage(message.id, split[1]));
                 break;
             case 'r' :
-                FrequencyWidget frequencyWidget = dash.findReadingWidget(split[1].split(StringUtils.BODY_SEPARATOR_STRING), message.id);
+            	String[] splitted = split[1].split(StringUtils.BODY_SEPARATOR_STRING);
+                FrequencyWidget frequencyWidget = dash.findReadingWidget(splitted, message.id);
                 if (frequencyWidget.isTicked(split[1])) {
                     session.sendMessageToHardware(ctx, dashId, new HardwareMessage(message.id, split[1]));
+                } else {
+                    final PinType type = PinType.getPingType(splitted[0].charAt(0));
+                    final byte pin = ParseUtil.parseByte(splitted[1], message.id);
+                	Widget widget = dash.findWidgetByPin(pin, type);
+                	if (widget != null) {
+                        session.sendMessageToHardware(ctx, dashId, new HardwareMessage(message.id, split[1]));
+                	}
                 }
                 break;
         }
