@@ -41,6 +41,8 @@ public class HardwareServer extends BaseServer {
                 pipeline.addLast(hardwareChannelStateHandler,
                         new MessageDecoder(holder.stats),
                         new MessageEncoder(holder.stats),
+                        holder.gatheringReadsHandler,
+                        holder.gatheringWritesHandler,
                         hardwareLoginHandler,
                         userNotLoggedHandler
                 );

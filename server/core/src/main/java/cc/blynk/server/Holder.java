@@ -1,6 +1,9 @@
 package cc.blynk.server;
 
 import cc.blynk.server.core.BlockingIOProcessor;
+import cc.blynk.server.core.batch.FlushWritesTaskHolder;
+import cc.blynk.server.core.batch.GatheringReadsHandler;
+import cc.blynk.server.core.batch.GatheringWritesHandler;
 import cc.blynk.server.core.dao.FileManager;
 import cc.blynk.server.core.dao.ReportingDao;
 import cc.blynk.server.core.dao.SessionDao;
@@ -15,12 +18,13 @@ import cc.blynk.server.notifications.twitter.TwitterWrapper;
 import cc.blynk.server.workers.ProfileSaverWorker;
 import cc.blynk.utils.FileLoaderUtil;
 import cc.blynk.utils.ServerProperties;
+import io.netty.channel.ChannelHandler;
 
-import static cc.blynk.utils.ReportingUtil.*;
+import static cc.blynk.utils.ReportingUtil.getReportingFolder;
 
 /**
  * Just a holder for all necessary objects for server instance creation.
- *
+ * <p>
  * The Blynk Project.
  * Created by Dmitriy Dumanskiy.
  * Created on 28.09.15.
@@ -52,6 +56,11 @@ public class Holder {
     public final GCMWrapper gcmWrapper;
     public final SMSWrapper smsWrapper;
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private FlushWritesTaskHolder flushWritesTaskHolder;
+    public ChannelHandler gatheringReadsHandler;
+    public ChannelHandler gatheringWritesHandler;
+
     public Holder(ServerProperties serverProperties) {
         this.props = serverProperties;
 
@@ -77,6 +86,8 @@ public class Holder {
         );
 
         this.dbManager = new DBManager(blockingIOProcessor);
+
+        setupBatching(serverProperties.getBoolProperty("enable.channel.batchWrites"));
     }
 
     //for tests only
@@ -105,6 +116,13 @@ public class Holder {
         );
 
         this.dbManager = new DBManager(blockingIOProcessor);
+
+        setupBatching(serverProperties.getBoolProperty("enable.channel.batchWrites"));
     }
 
+    private void setupBatching(boolean batchWritesEnabled) {
+        flushWritesTaskHolder = new FlushWritesTaskHolder();
+        gatheringReadsHandler = new GatheringReadsHandler(flushWritesTaskHolder, batchWritesEnabled);
+        gatheringWritesHandler = new GatheringWritesHandler(flushWritesTaskHolder, batchWritesEnabled);
+    }
 }

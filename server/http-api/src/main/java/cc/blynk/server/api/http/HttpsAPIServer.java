@@ -37,6 +37,8 @@ public class HttpsAPIServer extends BaseServer {
                         new SniHandler(mappings),
                         new HttpServerCodec(),
                         new HttpObjectAggregator(1024, true),
+                        holder.gatheringReadsHandler,
+                        holder.gatheringWritesHandler,
                         new HttpHandler(holder.userDao, holder.sessionDao, holder.stats)
                 );
             }

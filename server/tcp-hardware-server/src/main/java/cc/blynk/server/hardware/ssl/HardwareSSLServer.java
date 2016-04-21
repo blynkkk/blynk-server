@@ -49,6 +49,8 @@ public class HardwareSSLServer extends BaseServer {
                         hardwareChannelStateHandler,
                         new MessageDecoder(holder.stats),
                         new MessageEncoder(holder.stats),
+                        holder.gatheringReadsHandler,
+                        holder.gatheringWritesHandler,
                         hardwareLoginHandler,
                         userNotLoggedHandler
                 );
