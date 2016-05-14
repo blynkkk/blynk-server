@@ -57,6 +57,8 @@ public class AppServer extends BaseServer {
                         appChannelStateHandler,
                         new MessageDecoder(holder.stats),
                         new MessageEncoder(holder.stats),
+                        holder.gatheringReadsHandler,
+                        holder.gatheringWritesHandler,
                         registerHandler,
                         appLoginHandler,
                         appShareLoginHandler,

@@ -51,6 +51,8 @@ public class WebSocketServer extends BaseServer {
                         new MessageDecoder(holder.stats),
                         new WebSocketWrapperEncoder(),
                         new WebSocketEncoder(holder.stats),
+                        holder.gatheringReadsHandler,
+                        holder.gatheringWritesHandler,
                         hardwareLoginHandler,
                         userNotLoggedHandler
                 );
