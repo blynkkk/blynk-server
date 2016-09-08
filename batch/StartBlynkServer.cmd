@@ -19,7 +19,13 @@ for /f "usebackq tokens=2 delims=:" %%f in (`ipconfig ^| findstr /c:%ip_address_
 echo **************************
 
 cd /D %~dp0
-java -jar server-0.17.0.jar -dataFolder /path
+echo Available server files
+dir *.jar
+@echo off
+for /f "delims=" %%x in ('dir /od /b server*.jar') do set latestjar=%%x
+@echo on
+echo Server latest version on folder is %latestjar%
+java -jar %latestjar% -dataFolder /path
 IF /I "%ERRORLEVEL%" NEQ "0" (
     ECHO Server failed to started
 )
