@@ -19,7 +19,7 @@ Modify the server version to match the version you used
 ## Update 08/09/2016
 The script is now able to detect the latest version on your local server folder and run it.
 
-![patch runner](https://s16.postimg.org/awmfis8it/2016_09_08_22_47_01.png)
+![Scipt in action](https://s16.postimg.org/awmfis8it/2016_09_08_22_47_01.png)
 
-![patch runner](https://s9.postimg.org/tjo9ysnzj/2016_09_08_22_52_31.png)
+![placement of script in folder with multiple server versions](https://s9.postimg.org/tjo9ysnzj/2016_09_08_22_52_31.png)
 
