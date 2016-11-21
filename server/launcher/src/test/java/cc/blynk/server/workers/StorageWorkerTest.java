@@ -7,6 +7,7 @@ import cc.blynk.server.core.model.enums.PinType;
 import cc.blynk.server.core.reporting.average.AggregationKey;
 import cc.blynk.server.core.reporting.average.AggregationValue;
 import cc.blynk.server.core.reporting.average.AverageAggregator;
+import cc.blynk.server.core.reporting.elastic.ElasticClient;
 import cc.blynk.server.db.DBManager;
 import cc.blynk.utils.ReportingUtil;
 import cc.blynk.utils.ServerProperties;
@@ -48,6 +49,9 @@ public class StorageWorkerTest {
     @Mock
     public ServerProperties properties;
 
+    @Mock
+    private ElasticClient elasticClient;
+
     private BlockingIOProcessor blockingIOProcessor;
 
     @Before
@@ -64,7 +68,7 @@ public class StorageWorkerTest {
 
     @Test
     public void testStore() throws IOException {
-        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor));
+        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor), elasticClient);
 
         ConcurrentHashMap<AggregationKey, AggregationValue> map = new ConcurrentHashMap<>();
 
@@ -110,11 +114,12 @@ public class StorageWorkerTest {
         assertEquals(16, data.capacity());
         assertEquals(200.0, data.getDouble(), 0.001);
         assertEquals(ts * AverageAggregator.HOUR, data.getLong());
+        verify(elasticClient, times(3)).write(any(), any());
     }
 
     @Test
     public void testStore2() throws IOException {
-        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor));
+        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor), elasticClient);
 
         ConcurrentHashMap<AggregationKey, AggregationValue> map = new ConcurrentHashMap<>();
 
@@ -166,12 +171,14 @@ public class StorageWorkerTest {
 
         assertEquals(100.0, data.getDouble(), 0.001);
         assertEquals(ts * AverageAggregator.HOUR, data.getLong());
+
+        verify(elasticClient, times(3)).write(any(), any());
     }
 
 
     @Test
     public void testDeleteCommand() throws IOException {
-        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor));
+        StorageWorker storageWorker = new StorageWorker(averageAggregator, reportingFolder, new DBManager(blockingIOProcessor), elasticClient);
 
         ConcurrentHashMap<AggregationKey, AggregationValue> map = new ConcurrentHashMap<>();
 
@@ -203,6 +210,8 @@ public class StorageWorkerTest {
 
         new ReportingDao(reportingFolder, null, properties).delete("test", 1, PinType.ANALOG, (byte) 1);
         assertFalse(Files.exists(Paths.get(reportingFolder, "test", generateFilename(1, PinType.ANALOG, (byte) 1, GraphType.HOURLY))));
+
+        verify(elasticClient, times(3)).write(any(), any());
     }
 
     private long getTS() {

@@ -30,7 +30,8 @@ class JobLauncher {
         StorageWorker storageWorker = new StorageWorker(
                 holder.averageAggregator,
                 ReportingUtil.getReportingFolder(holder.props.getProperty("data.folder")),
-                holder.dbManager
+                holder.dbManager,
+                holder.elasticClient
         );
 
         //to start at the beggining of an minute
