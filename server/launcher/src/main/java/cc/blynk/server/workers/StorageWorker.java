@@ -4,6 +4,7 @@ import cc.blynk.server.core.model.enums.GraphType;
 import cc.blynk.server.core.reporting.average.AggregationKey;
 import cc.blynk.server.core.reporting.average.AggregationValue;
 import cc.blynk.server.core.reporting.average.AverageAggregator;
+import cc.blynk.server.core.reporting.elastic.ElasticClient;
 import cc.blynk.server.db.DBManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,11 +39,13 @@ public class StorageWorker implements Runnable {
     private final AverageAggregator averageAggregator;
     private final String reportingPath;
     private final DBManager dbManager;
+    private final ElasticClient elasticClient;
 
-    public StorageWorker(AverageAggregator averageAggregator, String reportingPath, DBManager dbManager) {
+    public StorageWorker(AverageAggregator averageAggregator, String reportingPath, DBManager dbManager, ElasticClient elasticClient) {
         this.averageAggregator = averageAggregator;
         this.reportingPath = reportingPath;
         this.dbManager = dbManager;
+        this.elasticClient = elasticClient;
     }
 
     /**
@@ -70,12 +73,15 @@ public class StorageWorker implements Runnable {
         try {
             removedKeys = process(averageAggregator.getMinute(), GraphType.MINUTE);
             dbManager.insertReporting(removedKeys, GraphType.MINUTE);
+            elasticClient.write(removedKeys, GraphType.MINUTE);
 
             removedKeys = process(averageAggregator.getHourly(), GraphType.HOURLY);
             dbManager.insertReporting(removedKeys, GraphType.HOURLY);
+            elasticClient.write(removedKeys, GraphType.HOURLY);
 
             removedKeys = process(averageAggregator.getDaily(), GraphType.DAILY);
             dbManager.insertReporting(removedKeys, GraphType.DAILY);
+            elasticClient.write(removedKeys, GraphType.DAILY);
 
             dbManager.cleanOldReportingRecords(Instant.now());
         } catch (Exception e) {

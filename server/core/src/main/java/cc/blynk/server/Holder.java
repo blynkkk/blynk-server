@@ -8,6 +8,7 @@ import cc.blynk.server.core.dao.TokenManager;
 import cc.blynk.server.core.dao.UserDao;
 import cc.blynk.server.core.processors.EventorProcessor;
 import cc.blynk.server.core.reporting.average.AverageAggregator;
+import cc.blynk.server.core.reporting.elastic.ElasticClient;
 import cc.blynk.server.core.stats.GlobalStats;
 import cc.blynk.server.db.DBManager;
 import cc.blynk.server.notifications.mail.MailWrapper;
@@ -69,6 +70,8 @@ public class Holder implements Closeable {
     public final EventorProcessor eventorProcessor;
     public final DefaultAsyncHttpClient asyncHttpClient;
 
+    public final ElasticClient elasticClient;
+
     public final String currentIp;
 
     public Holder(ServerProperties serverProperties) {
@@ -116,6 +119,8 @@ public class Holder implements Closeable {
 
         this.dbManager = new DBManager(blockingIOProcessor);
         this.currentIp = serverProperties.getProperty("reset-pass.http.host", IPUtils.resolveHostIP());
+
+        this.elasticClient = new ElasticClient(new ServerProperties(ElasticClient.ELASTIC_PROPERTIES));
     }
 
     //for tests only
@@ -158,6 +163,8 @@ public class Holder implements Closeable {
 
         this.dbManager = new DBManager(blockingIOProcessor);
         this.currentIp = serverProperties.getProperty("reset-pass.http.host", IPUtils.resolveHostIP());
+
+        this.elasticClient = new ElasticClient(new ServerProperties(ElasticClient.ELASTIC_PROPERTIES));
     }
 
     @Override
