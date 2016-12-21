@@ -20,7 +20,7 @@ public class ClientReplayingMessageDecoder extends ClientMessageDecoder {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         //server goes down
-        if (cause instanceof IOException) {
+        if (IOException.class.isInstance(cause)) {
             ctx.close();
             log.error("Client socket closed. Reason : {}", cause.getMessage());
             //todo find better way
