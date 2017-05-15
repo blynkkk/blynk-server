@@ -108,6 +108,21 @@ That's it!
 
         Blynk Server successfully started.
         All server output is stored in current folder in 'logs/blynk.log' file.
+
+## Running in a Docker container
+
+The [blynk-server Docker image](https://hub.docker.com/r/mpherg/blynk-server/)
+can be run to provide a standlone Blynk server.
+
++ On a machine with Docker installed:
+
+        docker run -p 8442-8443:8442-8443 mpherg/blynk-server
+
++ If you have your own server.properties file, you can mount it like this:
+
+        docker run -p 8442-8443:8442-8443 -v [path to local server.properties]:/data/server.properties mpherg/blynk-server
+
+That's it!
        
 ## Enabling server auto restart on unix-like systems
         
