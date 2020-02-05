@@ -41,7 +41,8 @@ public final class MobileAddPushLogic {
         String uid = splitBody[1];
         String token = splitBody[2];
 
-        DashBoard dash = state.user.profile.getDashByIdOrThrow(dashId);
+        User stateUser = state.user;
+        DashBoard dash = stateUser.profile.getDashByIdOrThrow(dashId);
 
         Notification notification = dash.getNotificationWidget();
 
@@ -61,6 +62,9 @@ public final class MobileAddPushLogic {
                 blockingIOProcessor.execute(() -> {
                     try {
                         for (User user : userDao.users.values()) {
+                            if (user.equals(stateUser)) {
+                                continue;
+                            }
                             for (DashBoard dashBoard : user.profile.dashBoards) {
                                 Notification tempNotifWidget = dashBoard.getNotificationWidget();
                                 if (tempNotifWidget != null && tempNotifWidget != notification) {
