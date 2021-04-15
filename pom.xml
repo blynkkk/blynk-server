@@ -166,7 +166,7 @@
         <postgresql.version>42.2.16</postgresql.version>
         <HikariCP.version>3.4.1</HikariCP.version>
         <qrgen.version>2.2.0</qrgen.version>
-        <bcpg-jdk15on.version>1.66</bcpg-jdk15on.version>
+        <bcpg-jdk15on.version>1.67</bcpg-jdk15on.version>
         <acme4j-client.version>2.10</acme4j-client.version>
         <javax.mail.version>1.6.2</javax.mail.version>
         <javax.activation.version>1.2.0</javax.activation.version>
