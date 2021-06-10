@@ -121,7 +121,7 @@ Go [here](https://www.google.com/settings/security/lesssecureapps) and then clic
 
 + Run the server on default 'hardware port 8080' and default 'application port 9443' (SSL port)
 
-        java -jar server-0.41.15-java8.jar -dataFolder /home/pi/Blynk
+        java -jar server-0.41.16-java8.jar -dataFolder /home/pi/Blynk
         
 That's it! 
 
